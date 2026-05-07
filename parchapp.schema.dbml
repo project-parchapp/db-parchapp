@@ -1,0 +1,257 @@
+// ParchApp — modelo lógico PostgreSQL (DBML para dbdiagram.io)
+// Basado en lineamientos: rutas personalizadas, establecimientos, reservas, reseñas/favoritos,
+// promociones, compartir ruta, mapa (coordenadas), chat turista–establecimiento.
+
+Project parchapp {
+  database_type: "PostgreSQL"
+  Note: "MVP ParchApp — turismo, rutas, reservas y visibilidad pagada"
+}
+
+// --- Catálogo e identidad ---
+
+Table interests {
+  id bigserial [pk]
+  code varchar(64) [unique, not null, note: "gastronomia, cultura, vida_nocturna, naturaleza, ..."]
+  name varchar(120) [not null]
+  description text
+  sort_order int [default: 0]
+  created_at timestamptz [default: `now()`]
+}
+
+Enum user_role {
+  tourist
+  establishment_admin
+  platform_admin
+}
+
+Table users {
+  id bigserial [pk]
+  email varchar(320) [unique, not null, note: "En PostgreSQL se recomienda tipo citext + extensión"]
+  password_hash varchar(255) [not null]
+  display_name varchar(160) [not null]
+  phone varchar(40)
+  avatar_url text
+  role user_role [not null, default: "tourist"]
+  is_active boolean [not null, default: true]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  Note: "Turistas y administradores de establecimiento (panel web)."
+}
+
+Enum establishment_status {
+  pending_review
+  active
+  suspended
+  closed
+}
+
+Table establishments {
+  id bigserial [pk]
+  owner_user_id bigint [not null, ref: > users.id, note: "Dueño del perfil en panel Next.js"]
+  legal_name varchar(255) [not null]
+  trade_name varchar(255) [not null]
+  description text
+  contact_email varchar(320)
+  contact_phone varchar(40)
+  website_url text
+  address_line text
+  city varchar(120) [not null]
+  country_code char(2) [not null]
+  latitude decimal(9,6) [not null, note: "Mapa y rutas"]
+  longitude decimal(9,6) [not null]
+  status establishment_status [not null, default: "pending_review"]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+}
+
+Table establishment_photos {
+  id bigserial [pk]
+  establishment_id bigint [not null, ref: > establishments.id]
+  url text [not null]
+  caption varchar(255)
+  sort_order int [not null, default: 0]
+  created_at timestamptz [default: `now()`]
+}
+
+Table establishment_interests {
+  establishment_id bigint [pk, ref: > establishments.id]
+  interest_id bigint [pk, ref: > interests.id]
+}
+
+Table establishment_hours {
+  id bigserial [pk]
+  establishment_id bigint [not null, ref: > establishments.id]
+  day_of_week smallint [not null, note: "0=domingo … 6=sábado"]
+  opens_at time
+  closes_at time
+  is_closed boolean [not null, default: false]
+
+  indexes {
+    (establishment_id, day_of_week) [unique]
+  }
+}
+
+// --- Servicios reservables y catálogo ---
+
+Table services {
+  id bigserial [pk]
+  establishment_id bigint [not null, ref: > establishments.id]
+  title varchar(200) [not null]
+  description text
+  service_kind varchar(64) [not null, note: "mesa, tour, entrada, experiencia, ..."]
+  duration_minutes int
+  base_price_amount decimal(12,2)
+  currency_code char(3) [default: "COP"]
+  max_party_size int
+  is_bookable boolean [not null, default: true]
+  is_active boolean [not null, default: true]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+}
+
+// --- Rutas (generador + historial + compartir) ---
+
+Enum route_status {
+  draft
+  saved
+  completed
+  archived
+}
+
+Table routes {
+  id bigserial [pk]
+  user_id bigint [not null, ref: > users.id]
+  name varchar(200) [not null]
+  description text
+  status route_status [not null, default: "draft"]
+  total_estimated_minutes int
+  origin_latitude decimal(9,6)
+  origin_longitude decimal(9,6)
+  generation_context jsonb [note: "Intereses elegidos, ventana de tiempo, preferencias"]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+}
+
+Table route_stops {
+  id bigserial [pk]
+  route_id bigint [not null, ref: > routes.id]
+  establishment_id bigint [ref: > establishments.id]
+  service_id bigint [ref: > services.id]
+  sort_order int [not null]
+  estimated_travel_minutes_from_prev int [default: 0]
+  estimated_stay_minutes int
+  latitude decimal(9,6) [not null]
+  longitude decimal(9,6) [not null]
+  note varchar(500)
+}
+
+Table route_interests {
+  route_id bigint [pk, ref: > routes.id]
+  interest_id bigint [pk, ref: > interests.id]
+}
+
+Table route_share_links {
+  id bigserial [pk]
+  route_id bigint [not null, ref: > routes.id]
+  created_by_user_id bigint [not null, ref: > users.id]
+  token uuid [unique, not null]
+  expires_at timestamptz
+  max_visits int
+  visit_count int [not null, default: 0]
+  created_at timestamptz [default: `now()`]
+}
+
+// --- Reservas ---
+
+Enum booking_status {
+  pending
+  confirmed
+  cancelled
+  completed
+  no_show
+}
+
+Table bookings {
+  id bigserial [pk]
+  user_id bigint [not null, ref: > users.id]
+  service_id bigint [not null, ref: > services.id]
+  route_id bigint [ref: > routes.id, note: "Opcional si la reserva viene desde una ruta"]
+  party_size int [not null]
+  scheduled_start timestamptz [not null]
+  scheduled_end timestamptz
+  status booking_status [not null, default: "pending"]
+  notes text
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+}
+
+// --- Promociones / pauta ---
+
+Enum promotion_status {
+  draft
+  active
+  paused
+  ended
+}
+
+Table promotions {
+  id bigserial [pk]
+  establishment_id bigint [not null, ref: > establishments.id]
+  name varchar(200) [not null]
+  status promotion_status [not null, default: "draft"]
+  starts_at timestamptz [not null]
+  ends_at timestamptz [not null]
+  visibility_weight int [not null, default: 1, note: "Mayor peso en listados/rutas"]
+  budget_amount decimal(12,2)
+  currency_code char(3) [default: "COP"]
+  created_at timestamptz [default: `now()`]
+}
+
+// --- Reseñas y favoritos ---
+
+Table reviews {
+  id bigserial [pk]
+  user_id bigint [not null, ref: > users.id]
+  establishment_id bigint [not null, ref: > establishments.id]
+  booking_id bigint [ref: > bookings.id]
+  rating smallint [not null, note: "1–5"]
+  comment varchar(2000)
+  created_at timestamptz [default: `now()`]
+
+  indexes {
+    (user_id, establishment_id) [unique, name: "uq_reviews_user_establishment"]
+  }
+}
+
+Table favorites {
+  user_id bigint [pk, ref: > users.id]
+  establishment_id bigint [pk, ref: > establishments.id]
+  created_at timestamptz [default: `now()`]
+}
+
+// --- Chat turista – establecimiento ---
+
+Table conversations {
+  id bigserial [pk]
+  tourist_user_id bigint [not null, ref: > users.id]
+  establishment_id bigint [not null, ref: > establishments.id]
+  created_at timestamptz [default: `now()`]
+  last_message_at timestamptz
+
+  indexes {
+    (tourist_user_id, establishment_id) [unique, name: "uq_conversations_tourist_establishment"]
+  }
+}
+
+Table messages {
+  id bigserial [pk]
+  conversation_id bigint [not null, ref: > conversations.id]
+  sender_user_id bigint [not null, ref: > users.id, note: "Turista o usuario dueño del establecimiento"]
+  body text [not null]
+  read_at timestamptz
+  created_at timestamptz [default: `now()`]
+}
+
+// Relaciones adicionales: bookings -> routes (opcional); route_stops puede enlazar
+// establecimiento y/o servicio para el generador de rutas y el mapa.
