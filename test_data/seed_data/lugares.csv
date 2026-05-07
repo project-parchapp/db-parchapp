@@ -1,0 +1,6 @@
+external_code,legal_name,trade_name,description,city,country_code,latitude,longitude,interest_code,address_line
+BOG_MUSEO_ORO,Museo del Oro,Banco de la República — Museo del Oro,Colección de orfebrería prehispánica,Bogotá,CO,4.601590,-74.071945,cultura,Cra. 6 #15-88
+BOG_MONSERRATE,Santuario de Monserrate,Monserrate,Vista panorámica de Bogotá,Bogotá,CO,4.605712,-74.055478,naturaleza,
+BOG_CANDELARIA,La Candelaria,Centro Histórico La Candelaria,Barrio colonial y murales,Bogotá,CO,4.596944,-74.075833,cultura,
+MED_COMUNA13,Comuna 13,Comuna 13 — Grafitour,Arte urbano y escaleras eléctricas,Medellín,CO,6.247637,-75.623058,cultura,
+MED_PUEBLITO,Pueblito Paisa,Cerro Nutibara — Pueblito Paisa,Mirador y muestra de arquitectura tradicional,Medellín,CO,6.269722,-75.590278,naturaleza,
