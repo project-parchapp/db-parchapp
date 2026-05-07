@@ -1,0 +1,7 @@
+external_route_code,external_establishment_code,sort_order,estimated_travel_minutes_from_prev,estimated_stay_minutes,note
+RUTA_BOG_CENTRO,BOG_MUSEO_ORO,1,0,120,"Visita guiada sugerida"
+RUTA_BOG_CENTRO,BOG_REST_ANDRES,2,25,90,"Cena"
+RUTA_BOG_CENTRO,BOG_MONSERRATE,3,40,90,"Subida en teleférico"
+RUTA_MED_CULTURA,MED_COMUNA13,1,0,90,"Tour de grafitis"
+RUTA_MED_CULTURA,MED_PUEBLITO,2,35,60,"Mirador"
+RUTA_MED_CULTURA,MED_REST_OCI,3,25,75,"Almuerzo típico"
