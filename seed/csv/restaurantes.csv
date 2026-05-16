@@ -1,0 +1,4 @@
+external_code,legal_name,trade_name,description,city,country_code,latitude,longitude,interest_code,service_title,service_kind,base_price_amount,address_line
+BOG_REST_ANDRES,Andrés DC S.A.S.,Andrés Carne de Res,"Experiencia gastronómica y música en vivo",Bogotá,CO,4.648283,-74.055761,gastronomia,Mesa para 2,mesa,180000.00,Cl. 3 #11A-56
+BOG_REST_LEO,Leo Cocina y Cava S.A.S.,Leo,"Alta cocina colombiana",Bogotá,CO,4.666942,-74.055008,gastronomia,Reserva cena degustación,mesa,350000.00,Cra. 7a #43a-49
+MED_REST_OCI,Mondongos S.A.S.,"Mondongo's","Comida típica antioqueña",Medellín,CO,6.208611,-75.567222,gastronomia,Mesa almuerzo,mesa,45000.00,Cll 10 #43d-30
