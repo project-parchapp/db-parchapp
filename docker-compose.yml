@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: parchapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_local
+      POSTGRES_DB: parchapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - parchapp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d parchapp"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  parchapp_pgdata:
