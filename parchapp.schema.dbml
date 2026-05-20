@@ -99,8 +99,8 @@ Table services {
   establishment_id bigint [not null, ref: > establishments.id]
   title varchar(200) [not null]
   description text
-  service_kind varchar(64) [not null, note: "mesa, tour, entrada, experiencia, ..."]
-  duration_minutes int
+  service_kind varchar(64) [not null, note: "mesa, tour, entrada, experiencia, event, ..."]
+  duration_minutes int [note: "Obligatorio > 0 si service_kind = event"]
   base_price_amount decimal(12,2)
   currency_code char(3) [default: "COP"]
   max_party_size int
