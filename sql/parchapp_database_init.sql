@@ -931,6 +931,20 @@ BEGIN
 
   DELETE FROM routes WHERE user_id = v_uid;
 
+  -- Reservas y paradas de otras rutas que referencian el catálogo semilla (FK RESTRICT)
+  DELETE FROM bookings
+  WHERE service_id IN (
+    SELECT s.id
+    FROM services s
+    INNER JOIN establishments e ON e.id = s.establishment_id
+    WHERE e.owner_user_id = v_uid
+  );
+
+  DELETE FROM route_stops
+  WHERE establishment_id IN (
+    SELECT id FROM establishments WHERE owner_user_id = v_uid
+  );
+
   DELETE FROM establishments WHERE owner_user_id = v_uid;
 
   DROP TABLE IF EXISTS tmp_seed_est_map;
